@@ -1,0 +1,225 @@
+CREATE DATABASE hotel_booking_system;
+USE hotel_booking_system;
+
+CREATE TABLE hotels (
+    hotel_id INT PRIMARY KEY AUTO_INCREMENT,
+    hotel_name VARCHAR(100) NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    contact_number VARCHAR(15) NOT NULL
+);
+
+INSERT INTO hotels (hotel_name, location, contact_number)
+VALUES
+('Grand Plaza', 'Mumbai', '9876543210'),
+('Ocean View', 'Goa', '9123456789'),
+('City Palace', 'Delhi', '9871234567'),
+('Blue Lagoon', 'Bangalore', '9988776655'),
+('Hilltop Resort', 'Shimla', '9012345678');
+
+CREATE TABLE rooms (
+    room_id INT PRIMARY KEY AUTO_INCREMENT,
+    hotel_id INT,
+    room_type VARCHAR(50) NOT NULL,
+    price_per_night DECIMAL(10, 2) NOT NULL,
+    status ENUM('Available', 'Booked') DEFAULT 'Available',
+    FOREIGN KEY (hotel_id) REFERENCES hotels(hotel_id) ON DELETE CASCADE
+);
+
+INSERT INTO rooms (hotel_id, room_type, price_per_night, status)
+VALUES
+(1, 'Deluxe', 4500.00, 'Available'),
+(1, 'Suite', 8000.00, 'Available'),
+(2, 'Standard', 3000.00, 'Booked'),
+(3, 'Executive', 6000.00, 'Available'),
+(4, 'Deluxe', 5000.00, 'Booked'),
+(5, 'Suite', 7500.00, 'Available'),
+(1, 'Presidential', 12000.00, 'Booked'),
+(3, 'Standard', 3200.00, 'Available'),
+(2, 'Executive', 6200.00, 'Booked'),
+(4, 'Suite', 7800.00, 'Available');
+
+
+CREATE TABLE guests (
+    guest_id INT PRIMARY KEY AUTO_INCREMENT,
+    guest_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone_number VARCHAR(15) NOT NULL,
+    address TEXT
+);
+
+INSERT INTO guests (guest_name, email, phone_number, address)
+VALUES
+('John Doe', 'john.doe@example.com', '9876543211', 'New York, USA'),
+('Aisha Khan', 'aisha.khan@example.com', '9123456788', 'Mumbai, India'),
+('Rahul Sharma', 'rahul.sharma@example.com', '9988776655', 'Delhi, India'),
+('Emma Watson', 'emma.w@example.com', '9123412345', 'London, UK'),
+('Rohan Patil', 'rohan.p@example.com', '9321098765', 'Pune, India'),
+('Maya Singh', 'maya.singh@example.com', '9911223344', 'Bangalore, India'),
+('Lucas Brown', 'lucas.b@example.com', '9876123456', 'Sydney, Australia'),
+('Samantha Lee', 'sam.lee@example.com', '9998877665', 'Toronto, Canada'),
+('Aditya Verma', 'aditya.v@example.com', '9123345678', 'Chennai, India'),
+('Olivia Davis', 'olivia.d@example.com', '9312345678', 'Los Angeles, USA');
+
+
+CREATE TABLE bookings (
+    booking_id INT PRIMARY KEY AUTO_INCREMENT,
+    guest_id INT,
+    room_id INT,
+    check_in DATE NOT NULL,
+    check_out DATE NOT NULL,
+    status ENUM('Confirmed', 'Cancelled', 'Completed') DEFAULT 'Confirmed',
+    FOREIGN KEY (guest_id) REFERENCES guests(guest_id) ON DELETE CASCADE,
+    FOREIGN KEY (room_id) REFERENCES rooms(room_id) ON DELETE CASCADE
+);
+
+INSERT INTO bookings (guest_id, room_id, check_in, check_out, status)
+VALUES
+(1, 1, '2025-05-01', '2025-05-05', 'Completed'),
+(2, 3, '2025-06-10', '2025-06-15', 'Confirmed'),
+(3, 2, '2025-04-20', '2025-04-25', 'Cancelled'),
+(4, 5, '2025-07-01', '2025-07-05', 'Completed'),
+(5, 4, '2025-08-10', '2025-08-15', 'Confirmed'),
+(6, 6, '2025-09-20', '2025-09-25', 'Completed'),
+(7, 7, '2025-04-01', '2025-04-10', 'Cancelled'),
+(8, 8, '2025-10-05', '2025-10-15', 'Confirmed'),
+(9, 9, '2025-11-01', '2025-11-05', 'Completed'),
+(10, 10, '2025-12-10', '2025-12-20', 'Confirmed');
+
+CREATE TABLE payments (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT,
+    booking_id INT,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payment_method ENUM('Credit Card', 'Debit Card', 'UPI', 'Net Banking', 'Cash'),
+    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE
+);
+
+INSERT INTO payments (booking_id, amount, payment_method)
+VALUES
+(1, 18000.00, 'Credit Card'),
+(2, 15000.00, 'UPI'),
+(3, 24000.00, 'Debit Card'),
+(4, 25000.00, 'Net Banking'),
+(5, 36000.00, 'UPI'),
+(6, 29000.00, 'Cash'),
+(7, 12000.00, 'Credit Card'),
+(8, 40000.00, 'Debit Card'),
+(9, 33000.00, 'UPI'),
+(10, 15000.00, 'Net Banking');
+
+-- 1. Get all available rooms in a specific hotel
+
+SELECT room_id, room_type, price_per_night, status
+FROM rooms
+WHERE hotel_id = 1 AND status = 'Available';
+
+-- 2. Get all completed bookings with guest and room details.
+
+SELECT b.booking_id, g.guest_name, r.room_type, b.check_in, b.check_out
+FROM bookings b
+JOIN guests g ON b.guest_id = g.guest_id
+JOIN rooms r ON b.room_id = r.room_id
+WHERE b.status = 'Completed';
+
+-- 3.   List rooms and their corresponding hotel names.
+
+SELECT r.room_id, r.room_type, r.price_per_night, h.hotel_name
+FROM rooms r
+JOIN hotels h ON r.hotel_id = h.hotel_id;
+
+-- 4.Retrieve all payments made via UPI
+ 
+ SELECT payment_id, amount, payment_date
+FROM payments
+WHERE payment_method = 'UPI';
+
+-- 5. Get details of a booking by booking ID.
+
+SELECT b.booking_id, g.guest_name, r.room_type, b.check_in, b.check_out, b.status
+FROM bookings b
+JOIN guests g ON b.guest_id = g.guest_id
+JOIN rooms r ON b.room_id = r.room_id
+WHERE b.booking_id = 10;
+
+-- 6. Calculate total revenue generated by each hotel.
+
+SELECT h.hotel_name, SUM(p.amount) AS total_revenue
+FROM payments p
+JOIN bookings b ON p.booking_id = b.booking_id
+JOIN rooms r ON b.room_id = r.room_id
+JOIN hotels h ON r.hotel_id = h.hotel_id
+GROUP BY h.hotel_name;
+
+-- 7. Get count of available rooms in each hotel.
+
+SELECT h.hotel_name, COUNT(r.room_id) AS available_rooms
+FROM rooms r
+JOIN hotels h ON r.hotel_id = h.hotel_id
+WHERE r.status = 'Available'
+GROUP BY h.hotel_name;
+
+-- 8.  Find guests who have booked a ‘Suite’.
+SELECT DISTINCT g.guest_name, g.email
+FROM guests g
+JOIN bookings b ON g.guest_id = b.guest_id
+JOIN rooms r ON b.room_id = r.room_id
+WHERE r.room_type = 'Suite';
+
+-- 9.Get highest-priced room in each hotel
+
+SELECT h.hotel_name, MAX(r.price_per_night) AS max_price
+FROM rooms r
+JOIN hotels h ON r.hotel_id = h.hotel_id
+GROUP BY h.hotel_name;
+ 
+-- 10. Show guest details and total amount they spent.
+
+SELECT g.guest_name, g.email, SUM(p.amount) AS total_spent
+FROM guests g
+JOIN bookings b ON g.guest_id = b.guest_id
+JOIN payments p ON b.booking_id = p.booking_id
+GROUP BY g.guest_id, g.guest_name, g.email
+ORDER BY total_spent DESC;
+
+--  11. Find all bookings made by a specific guest.
+
+SELECT b.booking_id, b.check_in, b.check_out, b.status
+FROM bookings b
+JOIN guests g ON b.guest_id = g.guest_id
+WHERE g.guest_name = 'John Doe';
+
+-- 12. Rank guests by total spending. 
+
+SELECT g.guest_name, SUM(p.amount) AS total_spent,
+       RANK() OVER (ORDER BY SUM(p.amount) DESC) AS ranks
+FROM guests g
+JOIN bookings b ON g.guest_id = b.guest_id
+JOIN payments p ON b.booking_id = p.booking_id
+GROUP BY g.guest_id, g.guest_name;
+
+-- 13. Get total number of bookings per month in the last year.
+
+SELECT DATE_FORMAT(check_in, '%Y-%m') AS month, COUNT(*) AS total_bookings
+FROM bookings
+WHERE check_in >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+GROUP BY month
+ORDER BY month;
+
+-- 14. Find the most frequently used payment method.
+
+SELECT payment_method, COUNT(*) AS usage_count
+FROM payments
+GROUP BY payment_method
+ORDER BY usage_count DESC
+LIMIT 1;
+
+
+
+
+
+
+
+
+
+
+
